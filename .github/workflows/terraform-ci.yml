@@ -73,15 +73,13 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         region: us-east-1
 
-    - name: Update Kubeconfig for EKS
-      run: aws eks update-kubeconfig --name terrakube-eks --region us-east-1
-
-    - name: Helm Deploy Terrakube
+    - name: Update Kubeconfig
       run: |
-        helm upgrade --install terrakube ./terrakube-helm-chart --values terrakube-values.yaml
+        aws eks update-kubeconfig --name terrakube-eks --region us-east-1
 
-    - name: Verify Deployment (kubectl get pods)
-      run: kubectl get pods -n default
+    - name: Deploy using Helm
+      run: |
+        helm upgrade --install terrakube ./terrakube-helm-chart -f terrakube-values.yaml
 
 
     - name: Deploy Terrakube Helm Chart
