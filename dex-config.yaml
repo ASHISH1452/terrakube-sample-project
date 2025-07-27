@@ -1,0 +1,47 @@
+connectors:
+- config:
+    bindDN: cn=admin,dc=example,dc=org
+    bindPW: admin
+    groupSearch:
+      baseDN: ou=Groups,dc=example,dc=org
+      filter: (objectClass=groupOfNames)
+      nameAttr: cn
+      userMatchers:
+      - groupAttr: member
+        userAttr: dn      # lowercase 'dn' hona chahiye, not 'DN'
+    host: terrakube-openldap-service:1389
+    insecureNoSSL: true
+    userSearch:
+      baseDN: ou=users,dc=example,dc=org
+      emailAttr: mail
+      filter: (objectClass=person)
+      idAttr: uid        # 'uid' is standard here, not 'DN'
+      nameAttr: cn
+      username: mail
+    usernamePrompt: Email Address
+  id: ldap
+  name: OpenLDAP
+  type: ldap
+issuer: http://a76b4e123e07f467696d30a81e49be4f-281537261.us-east-1.elb.amazonaws.com:8080/dex
+
+oauth2:
+  responseTypes:
+  - code
+  - token
+  - id_token
+staticClients:
+- id: example-app
+  name: example-app
+  public: true
+  redirectURIs:
+  - http://a76b4e123e07f467696d30a81e49be4f-281537261.us-east-1.elb.amazonaws.com:8080/callback
+  - http://terrakube-ui.minikube.net
+storage:
+  type: memory
+web:
+  allowedOrigins:
+  - '*'
+  http: 0.0.0.0:5556
+  skipApprovalScreen: true
+
+logLevel: debug

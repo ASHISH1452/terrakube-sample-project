@@ -1,0 +1,3 @@
+dex:
+  config:
+    issuer: http://a76b4e123e07f467696d30a81e49be4f-23204122.us-east-1.elb.amazonaws.com:8080/dex

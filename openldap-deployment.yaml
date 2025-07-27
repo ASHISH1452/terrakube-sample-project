@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terrakube-openldap
+  namespace: terrakube
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: terrakube-openldap
+  template:
+    metadata:
+      labels:
+        app: terrakube-openldap
+    spec:
+      containers:
+      - name: openldap
+        image: osixia/openldap:1.5.0
+        ports:
+        - containerPort: 389
+        - containerPort: 636
+        env:
+        - name: LDAP_ORGANISATION
+          value: "Example Org"
+        - name: LDAP_DOMAIN
+          value: "example.org"
+        - name: LDAP_ADMIN_PASSWORD
+          value: "admin"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: terrakube-openldap-service
+  namespace: terrakube
+spec:
+  ports:
+  - port: 1389
+    targetPort: 389
+    name: ldap
+  selector:
+    app: terrakube-openldap
+  type: ClusterIP
