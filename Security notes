@@ -1,0 +1,86 @@
+IAM Roles & Policies
+To ensure a least-privilege access model, IAM roles and policies were designed with strict scope limitations:
+
+EKS Cluster Role:
+
+Attached with AmazonEKSClusterPolicy and AmazonEKSServicePolicy to enable cluster operations without over-privileging.
+
+EKS Worker Node Role:
+
+Scoped with AmazonEKSWorkerNodePolicy, AmazonEC2ContainerRegistryReadOnly, and CloudWatchAgentServerPolicy.
+
+Enabled nodes to pull container images and push logs, while restricting access to only required AWS services.
+
+IAM Roles for Service Accounts (IRSA):
+
+Implemented IRSA binding for Terrakube service accounts.
+
+This allowed Terrakube pods to securely interact with AWS services using temporary tokens via OIDC, avoiding static credentials.
+
+Role permissions were defined for minimal access (e.g., S3 read/write only for specific buckets).
+
+Proactive Security Measures:
+No use of inline policies; managed policies were preferred for consistency.
+
+IAM policies were written to restrict actions to specific resource ARNs, avoiding wildcard (*) permissions.
+
+Access keys were securely injected via GitHub Actions Secrets, not hardcoded.
+
+Network Controls (VPC, Subnets, SGs)
+The architecture was designed to minimize the public exposure surface:
+
+VPC & Subnet Segmentation:
+
+Created a dedicated VPC with public subnets (for Load Balancers) and private subnets (for EKS worker nodes & Terrakube components).
+
+NAT Gateway was deployed to provide outbound internet access to private resources.
+
+Security Groups (SGs):
+
+EKS Nodes SG: Inbound access limited to the cluster's control plane and internal resources.
+
+Load Balancer SG: Only allowed HTTP (port 80) and HTTPS (port 443) traffic from the internet.
+
+SSH Access (port 22): Not exposed publicly. SSH access was restricted to specific admin IP addresses through SG rules.
+
+Network ACLs (NACLs):
+
+Default ACLs used with controlled rules to limit external inbound connections at the subnet level.
+
+Proactive Security Measures:
+Ingress & Egress rules were crafted to allow only the necessary ports/protocols.
+
+Prevented public IP assignment to EKS worker nodes.
+
+Monitored network traffic through CloudWatch Logs & VPC Flow Logs.
+
+Supply-Chain Security (Static & Runtime Scanning)
+To ensure a secure software supply chain, the following tools were integrated during CI/CD workflows:
+
+KICS (Keeping Infrastructure as Code Secure):
+
+Scanned Terraform files to detect insecure configurations like overly permissive IAM roles, open security groups, or misconfigured S3 buckets.
+
+Reports were integrated into the pipeline for proactive issue remediation.
+
+Terrascan:
+
+Policy-as-code enforcement tool.
+
+Scanned for common cloud misconfigurations and policy violations (e.g., unencrypted EBS volumes, overly broad IAM permissions).
+
+Trivy:
+
+Performed vulnerability scanning on Docker images used in Terrakube API and UI.
+
+Checked for known CVEs, misconfigured Dockerfiles, and outdated software components.
+
+Ensured compliance with CIS Docker Benchmark standards.
+
+Proactive Security Measures:
+Integrated security scanning tools into the CI/CD pipeline, enforcing checks before deployment.
+
+Critical vulnerabilities failed the pipeline, ensuring no insecure build was promoted to production.
+
+Scan results were logged and reviewed in each pull request to maintain code integrity.
+
