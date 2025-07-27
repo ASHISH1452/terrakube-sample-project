@@ -17,8 +17,8 @@ resource "aws_s3_bucket" "example" {
 }
 
 module "eks" {
-  source          = "terraform-aws-modules/eks/aws"
-  version         = "19.5.1"
+  source  = "terraform-aws-modules/eks/aws"
+  version = "19.5.1"
 
   cluster_name    = "terrakube-eks"
   cluster_version = "1.29"
