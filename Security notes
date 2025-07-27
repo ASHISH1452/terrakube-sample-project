@@ -31,6 +31,56 @@ The architecture was designed to minimize the public exposure surface:
 
 VPC & Subnet Segmentation:
 
+with cammand
+
+1. IRSA (IAM Roles for Service Accounts)
+Step 1: Create OIDC Provider for EKS
+
+aws eks describe-cluster --name terrakube-eks --query "cluster.identity.oidc.issuer" --output text
+
+eksctl utils associate-iam-oidc-provider --cluster terrakube-eks --approve
+Step 2: Create IAM Role for Terrakube Pod
+
+eksctl create iamserviceaccount \
+  --name terrakube-sa \
+  --namespace terrakube \
+  --cluster terrakube-eks \
+  --attach-policy-arn arn:aws:iam::aws:policy/AmazonS3FullAccess \
+  --approve \
+  --override-existing-serviceaccounts
+2. Scanning (KICS, Terrascan, Trivy)
+KICS Terraform Scan
+
+docker run -v $(pwd):/path checkmarx/kics:latest scan -p /path --output-path /path/kics-results/ --report-formats html,json
+Terrascan Policy Compliance Scan
+
+docker run -it --rm -v $(pwd):/iac accurics/terrascan scan -t terraform -d /iac
+Trivy Docker Image Vulnerability Scan
+
+trivy image terrakube/terrakube-api:latest
+trivy image terrakube/terrakube-ui:latest
+3. Tagging (Resource Tagging in Terraform)
+In main.tf or Terraform modules:
+
+hcl
+
+tags = {
+  "Project" = "TerrakubePOC"
+  "Environment" = "DevSecOps"
+  "Owner" = "Ashish Pal"
+}
+4. Teardown (Destroy Everything Cleanly)
+
+terraform destroy -auto-approve
+Extra (Optional but good practice)
+Cleanup Kubeconfig:
+
+
+aws eks update-kubeconfig --name terrakube-eks --profile default
+kubectl config delete-cluster terrakube-eks
+kubectl config delete-context terrakube-eks
+
+
 Created a dedicated VPC with public subnets (for Load Balancers) and private subnets (for EKS worker nodes & Terrakube components).
 
 NAT Gateway was deployed to provide outbound internet access to private resources.
