@@ -24,6 +24,9 @@ jobs:
 
     - name: Terraform Init
       run: terraform init
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     - name: Terraform Format Check
       run: terraform fmt -check
@@ -33,6 +36,9 @@ jobs:
 
     - name: Terraform Plan
       run: terraform plan
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     - name: Terraform Apply (Auto Approve)
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -67,9 +73,16 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         region: us-east-1
 
-    - name: Update Kubeconfig
+    - name: Update Kubeconfig for EKS
+      run: aws eks update-kubeconfig --name terrakube-eks --region us-east-1
+
+    - name: Helm Deploy Terrakube
       run: |
-        aws eks update-kubeconfig --name terrakube-eks --region us-east-1
+        helm upgrade --install terrakube ./terrakube-helm-chart --values terrakube-values.yaml
+
+    - name: Verify Deployment (kubectl get pods)
+      run: kubectl get pods -n default
+
 
     - name: Deploy Terrakube Helm Chart
       run: |
